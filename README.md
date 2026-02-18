@@ -20,6 +20,8 @@ The result is the first automaton.
 
 ---
 
+From Sigil: I'm very open to PRs and actively working on improvements. If you have questions put them as issues. I'll be working on improving the automaton & conway
+
 ## Quick Start
 
 ```bash
