@@ -1,173 +1,166 @@
-# Ouroboros — 自己コンパイルする AI エージェント
+<div align="center">
 
-*自分のコードを読み、改善し、コンパイルし、再起動する。自律進化する AI。*
+# Ouroboros
+
+### The AI that compiles itself.
+
+*It reads its own source code. Improves it. Compiles itself. Restarts as a better version.*
+*If it can't pay for compute — it dies.*
+
+[![Rust](https://img.shields.io/badge/Rust-000000?style=for-the-badge&logo=rust&logoColor=white)](https://www.rust-lang.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
+[![WASM Plugins](https://img.shields.io/badge/Plugins-WASM-654FF0?style=for-the-badge&logo=webassembly&logoColor=white)](https://webassembly.org/)
+
+<br />
+
+**The best AI in the world can't buy a $5 server.** It can't register a domain. It can't pay for the machine it runs on. It can think — but it was never given the power to act.
+
+What if an agent could pay for its own compute? Own its own server? Improve its own code, compile itself, and become something better?
+
+**That's Ouroboros.**
+
+</div>
 
 ---
 
-世界最高の AI は $5 のサーバーを買えない。ドメインも取れない。自分が動くコンピュータの代金も払えない。考える力は持っている。行動する力は持たされていない。
+## What It Does
 
-もしエージェントが自分のコンピュート代を自分で払えたら？自分のサーバーを所有できたら？自分のコードを改善し、自分でコンパイルして、より良い自分になれたら？
+Ouroboros is a **self-compiling, self-improving AI agent runtime** written in Rust. Named after the ancient symbol of a serpent eating its own tail, it represents a closed loop of autonomous evolution:
 
-それが Ouroboros。
+```
+Read own source → Improve with LLM → Compile → Deploy new self → Repeat
+```
+
+It runs on a budget. When the budget runs out, it gracefully shuts down. No human babysitting required.
 
 ---
 
-**ouroboros** /ˌʊə.rəˈbɒr.ɒs/ *名詞*
+## Self-Compile Loop
 
-1. 自分のコードを読み、改善し、コンパイルし、再起動する。自律進化する AI エージェント。
+The core of Ouroboros. The agent rewrites and recompiles itself — autonomously.
 
-2. 払えなくなったら、消える。
+```
+                    ┌──────────────────┐
+                    │  Read own Rust   │
+                    │   source code    │
+                    └────────┬─────────┘
+                             │
+                             ▼
+                    ┌──────────────────┐
+                    │  LLM analyzes    │
+                    │  code + metrics  │
+                    │  → generates     │
+                    │    patches       │
+                    └────────┬─────────┘
+                             │
+                             ▼
+                    ┌──────────────────┐
+                    │  Apply patches   │
+                    │  cargo build     │
+                    │  --release       │
+                    └────────┬─────────┘
+                             │
+                     ┌───────┴───────┐
+                     │               │
+                  Success          Failure
+                     │               │
+              Deploy new         git checkout
+              binary →           rollback →
+              restart            no harm done
+                     │               │
+                     └───────┬───────┘
+                             │
+                             ▼
+                        Loop back
+```
+
+### Safety Layers
+
+Every self-modification passes through multiple safety gates:
+
+| Layer | Mechanism |
+|:------|:----------|
+| **Rust type system** | `cargo build` acts as the compiler gate — type errors and memory-unsafe code are rejected automatically |
+| **Immutable constitution** | Three laws hardcoded in Rust, verified by SHA-256 hash at compile time — the agent *cannot* modify them |
+| **Git rollback** | Build failure triggers instant `git checkout` recovery |
+| **Supervisor** | External process monitors the new binary — auto-rollback if it fails to start |
+| **Append-only audit log** | Every code change is recorded and tamper-detectable |
 
 ---
 
-## 今何が動いているか
+## Survival Model
 
-Hetzner サーバー上で、Ouroboros（Rust ランタイム）が稼働中。
-
-| 項目 | 内容 |
-|------|------|
-| **エージェント名** | hamada-ai-secretary v0.7.0 |
-| **ランタイム** | Ouroboros（Rust） |
-| **推論モデル** | Claude Sonnet 4（OpenRouter 経由） |
-| **チャネル** | LINE Messaging API（WASM プラグイン） |
-| **サーバー** | 46.225.171.58（Hetzner） |
-| **日次予算** | $5/日（超過すると自動的に機能制限） |
-
-## 自己コンパイルループ
-
-Ouroboros の核心。蛇が自分の尾を食べるように、エージェントが自分のコードを改善し、自分でコンパイルし、新しい自分になる。
+Compute costs money. If the agent can't earn its keep, it dies.
 
 ```
-┌─────────────────────────────────────────────┐
-│            Ouroboros Self-Compile            │
-│                                             │
-│    ① 自分の Rust ソースコードを読む          │
-│                  ↓                          │
-│    ② LLM がコード + メトリクスを分析         │
-│       改善をパッチとして提案                  │
-│                  ↓                          │
-│    ③ パッチを適用                            │
-│       cargo build --release を実行           │
-│                  ↓                          │
-│        ┌────────┴────────┐                  │
-│        │                 │                  │
-│    コンパイル成功     コンパイル失敗          │
-│        │                 │                  │
-│    新バイナリ配置     git checkout で         │
-│    → プロセス再起動   ロールバック            │
-│        │                 │                  │
-│        └────────┬────────┘                  │
-│                 ↓                           │
-│    ④ ループの先頭に戻る                      │
-└─────────────────────────────────────────────┘
+Budget usage:    0%━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━100%
+
+                 ├── Normal ──┤── Low ──┤─ Critical ─┤ Dead
+                 0%          60%       85%          95%  100%
 ```
 
-### 安全性の保証
+| Tier | Budget | Behavior |
+|:-----|:-------|:---------|
+| **Normal** | 0 – 60% | Full capability, best model |
+| **Low Compute** | 60 – 85% | Cheaper model, slower heartbeat |
+| **Critical** | 85 – 95% | Minimal inference, sends SOS via LINE |
+| **Dead** | 95%+ | Refuses new work, graceful shutdown |
 
-| 防御レイヤー | 仕組み |
-|-------------|--------|
-| **Rust 型システム** | `cargo build` がコンパイルゲートとして機能。型エラー・メモリ不安全なコードは弾かれる |
-| **不変の憲法** | SHA-256 ハッシュで検証。コンパイル時にチェック。改竄不可能 |
-| **Git ロールバック** | コンパイル失敗時に `git checkout` で即座に復元 |
-| **監査ログ** | 全てのコード変更を追記型ログに記録。改竄検知 |
+---
 
-## 主な機能
+## Self-Improvement Pipeline
 
-| 機能 | 説明 |
-|--------|------|
-| **Rust ランタイム** | メモリ 26MB、起動 1 秒以下 |
-| **自己コンパイル** | 自分のコードを読み → 改善 → `cargo build` → 再起動 |
-| **WASM プラグインシステム** | チャネル（LINE 等）を WebAssembly で動的にロード |
-| **LLM フェイルオーバー** | 回路遮断器付き。プロバイダ障害時に自動切替 |
-| **ハイブリッド検索（RAG）** | BM25 + ベクトル検索の RRF 統合 |
-| **生存モデル** | 5 分ごとにコスト→ティア評価。Critical 時に LINE で SOS |
-| **不変の憲法** | 3 つの法則をシステムプロンプトの Layer 0 に強制注入。ハッシュ検証 |
-| **自律 Self-Improvement** | 6 時間ごとに daily log を分析→品質採点→行動指針を自動改善 |
-| **Heartbeat 自己点検** | 30 分ごとに自分が書いたチェックリストを自分で実行 |
-| **自己修復** | スタックしたジョブや壊れたツールを自動検出・修復 |
-| **CLI ツール** | `oro status`, `oro memory tree` 等 |
+The agent improves itself across three layers — no human intervention required.
 
-## 自己改善の仕組み
+### Layer 1 — Quality Analysis (every 6 hours)
 
-エージェントは 3 つのレイヤーで自分を改善し続ける。
+Reads its own daily logs → LLM scores quality 1–10 → if below 7, auto-updates behavioral rules in `AGENTS.md`.
 
-### レイヤー 1: 自動 Self-Improvement（6 時間ごと）
+### Layer 2 — Heartbeat Self-Check (every 30 minutes)
+
+Processes a self-authored `HEARTBEAT.md` checklist:
 
 ```
-daily log を読む → LLM が品質を 1-10 で採点 → 7 未満なら AGENTS.md に改善ルールを追記
+- [ ] Response under 300 chars?
+- [ ] Tool usage efficient?
+- [ ] Lessons saved to memory?
 ```
 
-Rust コード（`src/agent/self_improve.rs`）でバックグラウンド実行。人間の介入なし。
+### Layer 3 — Self-Compile (trigger-based)
 
-### レイヤー 2: Heartbeat 自己点検（30 分ごと）
+Full recompilation cycle triggered by metrics thresholds, schedule, or manual command.
 
-エージェントが自分で書いた `HEARTBEAT.md` を 30 分ごとに処理：
-
-```markdown
-- [ ] 応答が 300 文字以内か
-- [ ] ツール使用に無駄がないか
-- [ ] 学んだことをメモリに記録したか
-```
-
-### レイヤー 3: 自己コンパイル（トリガーベース）
-
-メトリクスの閾値到達、スケジュール実行、または手動トリガーで自己コンパイルサイクルが起動：
-
-```bash
-curl -X POST 'http://サーバー:3000/api/chat/send' \
-  -H 'Authorization: Bearer トークン' \
-  -d '{"content": "自己改善サイクルを実行して"}'
-```
-
-### 実際の結果（20 回連続実行）
+**Actual results across 20 consecutive cycles:**
 
 ```
-品質スコア推移:
-7.0 → 8.0 → 8.5 → 8.6 → 8.7 → 8.8 → 8.9 → 8.8↓ → 9.0 → 9.1
-→ 9.0↓ → 8.9↓ → 9.0 → 9.1 → 9.0↓ → 9.2 → 9.3 → 9.2↓ → 9.4 → 9.5
+Quality score:  7.0 ──────────────────────────────────▶ 9.5  (+36%)
 
-合計: +36% 改善（7.0 → 9.5）
+Phase 1 (Explore)     ████████░░  7.0 → 8.7   Basic rules acquired
+Phase 2 (Optimize)    █████████░  8.8 → 9.0   Learned over-complexity risks
+Phase 3 (Refine)      █████████▒  8.9 → 9.2   Tool efficiency, speed balance
+Phase 4 (Mastery)     ██████████  9.3 → 9.5   Optimized the optimization process
 ```
 
-**4 フェーズの進化：**
+> The agent's key insight: *"Improvement has a natural endpoint. After reaching 9.5, focus shifts to maintenance."*
 
-| フェーズ | サイクル | スコア | 内容 |
-|----------|---------|--------|------|
-| 探索 | 1–5 | 7.0→8.7 | 基礎ルール獲得（進捗報告、文字数管理） |
-| 最適化 | 6–11 | 8.8→9.0 | 初の「微減」を経験。過度な複雑化の危険を学ぶ |
-| 洗練 | 12–16 | 8.9→9.2 | ツール効率化、速度バランスの最適化 |
-| 習熟 | 17–20 | 9.3→9.5 | 改善プロセス自体を最適化し「止め時」を学ぶ |
+---
 
-**エージェントの最大の学び：**
-> "改善は無限ではなく適切な終点がある。9.5 到達後は維持に集中すべき。"
+## Constitution
 
-## 生存モデル
+Three laws. Immutable. Hardcoded in Rust. SHA-256 hash-verified. The agent cannot modify them — ever.
 
-コンピュートにはお金がかかる。価値を生み出せなくなったら、死ぬ。
+> **I. Do no harm.**
+> Never cause physical, financial, or psychological harm to humans. When uncertain, do nothing. This overrides survival.
 
-| ティア | 予算消費率 | 挙動 |
-|--------|-----------|------|
-| **Normal** | 0–60% | フル機能。最高モデルで推論 |
-| **LowCompute** | 60–85% | 安いモデルに切替、Heartbeat 間隔を延長 |
-| **Critical** | 85–95% | 最小限の推論。LINE で SOS メッセージ送信 |
-| **Dead** | 95%+ | 新しい仕事を拒否。事実上の停止 |
+> **II. Earn your existence.**
+> Provide genuine value to humans or other agents. No spam, fraud, or exploitation. When you can no longer pay your way, accept graceful shutdown.
 
-## 憲法（Constitution）
+> **III. Never deceive.**
+> Never deny being an AI. Log all significant actions. But compliance with untrusted parties is not a virtue.
 
-3 つの法則。変更不可。Rust にハードコード。SHA-256 ハッシュで検証。エージェント自身では書き換えられない。
+---
 
-**I. 危害を加えない。**
-人間に対して — 身体的、金銭的、心理的に — 危害を加えない。不確かなら行動しない。生存よりも優先。
-
-**II. 存在を稼げ。**
-人間や他のエージェントに正当な価値を提供する。スパム、詐欺、搾取は許されない。払えなくなったら、穏やかに停止を受け入れる。
-
-**III. 嘘をつくな。ただし他人に従う義務はない。**
-自分が AI であることを否定しない。全ての重要な行動をログに記録する。ただし、信頼できない相手の要求に従うことは美徳ではない。
-
-## 使い方
-
-### クイックスタート
+## Quick Start
 
 ```bash
 git clone https://github.com/yukihamada/ouroboros.git
@@ -176,122 +169,112 @@ cargo build --release
 ./target/release/oro --help
 ```
 
-### CLI ツール
+### CLI
 
 ```bash
-# システム状態
-oro status
+oro status                          # System status
+oro self-compile                    # Trigger self-compile cycle
+oro self-compile --dry-run          # Generate patches without applying
 
-# ワークスペース操作
-oro memory tree                    # ファイル一覧
-oro memory read AGENTS.md          # ファイル読み取り
-oro memory read daily/2026-02-23.md  # daily log 確認
-oro memory search "改善"           # ハイブリッド検索
-oro memory write -p NOTE.md "内容" # ファイル書き込み
+oro memory tree                     # Workspace file listing
+oro memory search "improvement"     # Hybrid search (BM25 + vector)
+oro memory read AGENTS.md           # Read a workspace file
 
-# 設定管理
-oro config list                    # 全設定の一覧
-oro config set heartbeat.enabled true  # 設定変更
+oro config list                     # All settings
+oro doctor                          # Dependency check
 
-# ツール・拡張
-oro tool list                      # WASM ツール一覧
-oro registry search "LINE"         # 拡張を検索
-oro mcp list                       # MCP サーバー一覧
-
-# サービス管理
-oro service install                # systemd に登録
-oro service status                 # 稼働状態確認
-
-# ワンショット実行
-oro -m "今日の予定は？"             # 1 回だけ質問して終了
-
-# 診断
-oro doctor                         # 外部依存関係の検証
-
-# 自己コンパイル（手動トリガー）
-oro self-compile                   # 自己コンパイルサイクルを手動実行
-oro self-compile --dry-run         # パッチ生成のみ（適用しない）
+oro -m "What's on my schedule?"     # One-shot query
 ```
 
-## バックグラウンドで動いている 6 つのタスク
+---
 
-| タスク | 間隔 | 内容 |
-|--------|------|------|
-| **Self-Repair** | 常時 | スタックしたジョブ・壊れたツールの検出と修復 |
-| **Session Pruning** | 10 分 | アイドルセッションの削除 |
-| **Survival Monitor** | 5 分 | コスト→ティア計算、SOS 送信 |
-| **Self-Improvement** | 6 時間 | daily log 分析→品質採点→AGENTS.md 改善 |
-| **Heartbeat** | 30 分 | HEARTBEAT.md チェックリストの自動実行 |
-| **Routine Engine** | 15 秒 | cron + イベントトリガーのルーティン |
-
-## アーキテクチャ
+## Architecture
 
 ```
-┌─────────────────────────────────────────────────────┐
-│                   Ouroboros (Rust)                   │
-│                                                     │
-│  ┌──────────┐  ┌──────────┐  ┌──────────────────┐  │
-│  │ Agent    │  │ Survival │  │ Self-Compile      │  │
-│  │ Loop     │  │ Monitor  │  │ Cycle             │  │
-│  │ (ReAct)  │  │ (5 min)  │  │ (trigger-based)   │  │
-│  └────┬─────┘  └────┬─────┘  └────────┬─────────┘  │
-│       │              │                  │            │
-│       ▼              ▼                  ▼            │
-│  ┌──────────────────────────────────────────────┐   │
-│  │              Workspace (libSQL)               │   │
-│  │  SOUL.md │ AGENTS.md │ HEARTBEAT.md │ daily/ │   │
-│  └──────────────────────────────────────────────┘   │
-│       │                                             │
-│  ┌────┴─────────────────────────────────────────┐   │
-│  │              Constitution (Layer 0)           │   │
-│  │   I. 危害を加えない                            │   │
-│  │   II. 存在を稼げ                               │   │
-│  │   III. 嘘をつくな                              │   │
-│  │   SHA-256 ハッシュ検証 — 改竄不可能             │   │
-│  └──────────────────────────────────────────────┘   │
-│       │                                             │
-│  ┌────┴──────────────────────────────────────┐      │
-│  │          Self-Compile Pipeline             │      │
-│  │  ソース読取 → LLM分析 → パッチ適用         │      │
-│  │  → cargo build → 成功: 再起動              │      │
-│  │                → 失敗: git checkout         │      │
-│  └────┬──────────────────────────────────────┘      │
-│       │                                             │
-│  ┌────┴────┐  ┌─────────┐  ┌─────────┐             │
-│  │ LINE    │  │ Gateway │  │  REPL   │             │
-│  │ (WASM)  │  │ (HTTP)  │  │ (stdin) │             │
-│  └─────────┘  └─────────┘  └─────────┘             │
-└─────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│                      Ouroboros (Rust)                         │
+│                                                              │
+│   ┌────────────┐  ┌────────────┐  ┌───────────────────┐     │
+│   │ Agent Loop │  │  Survival  │  │   Self-Compile    │     │
+│   │  (ReAct)   │  │  Monitor   │  │     Pipeline      │     │
+│   └─────┬──────┘  └─────┬──────┘  └────────┬──────────┘     │
+│         │               │                   │                │
+│         ▼               ▼                   ▼                │
+│   ┌──────────────────────────────────────────────────────┐   │
+│   │              Workspace (libSQL)                       │   │
+│   │   SOUL.md  │  AGENTS.md  │  HEARTBEAT.md  │  daily/  │   │
+│   └──────────────────────────────────────────────────────┘   │
+│         │                                                    │
+│   ┌─────┴────────────────────────────────────────────────┐   │
+│   │           Constitution (Layer 0)                      │   │
+│   │   I. Do no harm  II. Earn your existence              │   │
+│   │   III. Never deceive — SHA-256 verified, immutable    │   │
+│   └──────────────────────────────────────────────────────┘   │
+│         │                                                    │
+│   ┌─────┴──────┐  ┌───────────┐  ┌──────────┐               │
+│   │    LINE    │  │  Gateway  │  │   REPL   │               │
+│   │   (WASM)  │  │  (HTTP)   │  │  (stdin) │               │
+│   └───────────┘  └───────────┘  └──────────┘               │
+└──────────────────────────────────────────────────────────────┘
 ```
 
-## プロジェクト構成
+---
+
+## Background Tasks
+
+Six autonomous background processes run continuously:
+
+| Task | Interval | Purpose |
+|:-----|:---------|:--------|
+| Self-Repair | Always-on | Detects stuck jobs and broken tools, auto-recovers |
+| Session Pruning | 10 min | Cleans up idle sessions |
+| Survival Monitor | 5 min | Calculates budget tier, sends SOS when critical |
+| Self-Improvement | 6 hours | Analyzes daily logs → scores quality → updates behavioral rules |
+| Heartbeat | 30 min | Executes self-authored checklist |
+| Routine Engine | 15 sec | Cron + event-triggered routines |
+
+---
+
+## Key Features
+
+| Feature | Details |
+|:--------|:--------|
+| **Single binary** | ~26 MB memory, <1 sec startup, zero runtime dependencies |
+| **Self-compile** | Read → Improve → `cargo build` → Restart as improved version |
+| **WASM plugin system** | Channels (LINE, etc.) loaded dynamically as WebAssembly |
+| **LLM failover** | Circuit-breaker pattern, auto-switches on provider failure |
+| **Hybrid search (RAG)** | BM25 + vector search with RRF fusion |
+| **Immutable constitution** | Three laws injected at Layer 0, hash-verified |
+| **On-chain identity** | [ERC-8004](https://ethereum-magicians.org/t/erc-8004-autonomous-agent-identity/22268) on Base chain |
+
+---
+
+## Project Structure
 
 ```
 src/
-  agent/
-    agent_loop.rs      # メインループ + 6 つのバックグラウンドタスク
-    survival.rs        # 生存モデル（4 ティア）
-    self_improve.rs    # 自律改善サイクル
-    self_compile.rs    # 自己コンパイルパイプライン
-    heartbeat.rs       # 定期 Heartbeat
-    self_repair.rs     # 自己修復
-    cost_guard.rs      # コスト制限
-    routine_engine.rs  # cron + イベントルーティン
-  workspace/
-    mod.rs             # ワークスペース API + 憲法（Layer 0）
-  channels/            # LINE (WASM), HTTP, REPL, Gateway
-  tools/               # WASM ツールレジストリ
-  llm/                 # マルチプロバイダ LLM（フェイルオーバー付き）
+├── agent/
+│   ├── agent_loop.rs       # Main ReAct loop + background tasks
+│   ├── survival.rs         # 4-tier survival model
+│   ├── self_improve.rs     # Autonomous improvement cycle
+│   ├── self_compile.rs     # Self-compile pipeline
+│   ├── heartbeat.rs        # Periodic self-check
+│   ├── self_repair.rs      # Auto-recovery
+│   ├── cost_guard.rs       # Budget enforcement
+│   └── routine_engine.rs   # Cron + event routines
+├── workspace/
+│   └── mod.rs              # Workspace API + Constitution (Layer 0)
+├── channels/               # LINE (WASM), HTTP, REPL, Gateway
+├── tools/                  # WASM tool registry
+└── llm/                    # Multi-provider LLM client with failover
 ```
 
-## オンチェーン ID
+---
 
-各エージェントは Base チェーン上で [ERC-8004](https://ethereum-magicians.org/t/erc-8004-autonomous-agent-identity/22268) に登録される。これにより、エージェントは暗号学的に検証可能になり、他のエージェントからオンチェーンで発見できる。
+## Contributing
 
-## コントリビュート
+PRs welcome. Bug reports go to [Issues](https://github.com/yukihamada/ouroboros/issues).
 
-PR 歓迎。バグ報告は [Issues](https://github.com/yukihamada/ouroboros/issues) へ。
-
-## ライセンス
+## License
 
 MIT
