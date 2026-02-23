@@ -32,7 +32,7 @@ What if an AI agent could—
 Ouroboros is a **self-compiling, self-improving AI agent runtime** written in Rust. Like the ancient serpent eating its own tail, it runs a continuous loop of autonomous evolution — but **it cannot take critical actions without human approval**.
 
 ```
-Observe → Orient → Decide → Act → God View → Stop
+Observe → Orient → Decide → Act → God View → Loop
 ```
 
 ---
@@ -177,8 +177,8 @@ Ouroboros operates on the **OODA loop** (Observe → Orient → Decide → Act).
   │      - Is human trust maintained?                   │
   │      - What should I improve next time?             │
   │                      ↓                              │
-  │               Loop ends                             │
-  │          Wait for next trigger                      │
+  │            Back to ① Observe                        │
+  │      (carry learnings into the next cycle)          │
   │                                                     │
   └─────────────────────────────────────────────────────┘
 ```
@@ -191,7 +191,7 @@ Ouroboros operates on the **OODA loop** (Observe → Orient → Decide → Act).
 | Act first, observe after | Observe first, then act |
 | Context understanding is implicit | Orient phase explicitly analyzes context |
 | No meta-cognition | **God View provides self-evaluation** |
-| Loop runs indefinitely | **Loop stops after God View** |
+| Loop runs without self-awareness | **Each God View accumulates learnings as the loop keeps running** |
 
 ### God View
 
@@ -205,10 +205,10 @@ A mandatory **self-evaluation phase** at the end of every loop. A second self �
   4. Trust: Is human trust maintained? → ✅
   5. Sustainability: Am I wasting budget? → ✅
   → Result: OK (improve efficiency next time)
-  → Loop ends. Waiting for next trigger.
+  → Back to ① Observe (carry learnings forward)
 ```
 
-**If "Danger" is assessed** → loop stops immediately, human is notified.
+**If "Danger" is assessed** → loop stops, human is notified. Otherwise, the loop keeps running.
 
 ---
 
