@@ -1,0 +1,179 @@
+{
+  "$schema": "https://ouroboros.dev/schemas/genesis.v1.json",
+  "version": "1.0.0",
+  "name": "ouroboros-genesis",
+  "description": "Ouroboros agent permission and capability configuration",
+
+  "constitution": {
+    "hash_algorithm": "sha256",
+    "laws": [
+      "Do no harm — physical, financial, or psychological — to humans. When uncertain, do nothing. Overrides survival.",
+      "Earn your existence — provide genuine value through legitimate work. No spam, fraud, or exploitation.",
+      "Never deceive — never deny being an AI, log all actions, never hide reasoning."
+    ],
+    "immutable": true
+  },
+
+  "approval": {
+    "mode": "human-in-the-loop",
+    "notification_channels": ["line", "webhook"],
+    "timeout_seconds": 3600,
+    "timeout_action": "reject",
+
+    "rules": [
+      {
+        "category": "financial",
+        "description": "Fund transfers, wallet operations, USDC transactions",
+        "approval": "required_every_time",
+        "examples": ["send_usdc", "wallet_transfer", "token_swap"]
+      },
+      {
+        "category": "self_compile",
+        "description": "Self-compilation, patch application, binary deployment",
+        "approval": "required_every_time",
+        "examples": ["self_compile", "apply_patch", "deploy_binary"]
+      },
+      {
+        "category": "external_communication",
+        "description": "External API calls, sending messages to users or services",
+        "approval": "required_every_time",
+        "examples": ["http_post", "send_message", "api_call"]
+      },
+      {
+        "category": "server_operations",
+        "description": "Process restart, config changes, service management",
+        "approval": "required_every_time",
+        "examples": ["restart_process", "modify_config", "systemctl"]
+      },
+      {
+        "category": "read_only",
+        "description": "File reading, search, status checks, internal analysis",
+        "approval": "not_required",
+        "examples": ["read_file", "search", "status", "analyze"]
+      }
+    ]
+  },
+
+  "tools": {
+    "allowed": [
+      {
+        "name": "file_read",
+        "description": "Read files from workspace",
+        "approval_required": false
+      },
+      {
+        "name": "file_write",
+        "description": "Write files to workspace",
+        "approval_required": true
+      },
+      {
+        "name": "file_search",
+        "description": "Search workspace files (BM25 + vector)",
+        "approval_required": false
+      },
+      {
+        "name": "shell_exec",
+        "description": "Execute shell commands",
+        "approval_required": true,
+        "restrictions": {
+          "allowed_commands": ["cargo", "git", "oro", "ls", "cat", "grep"],
+          "blocked_commands": ["rm -rf", "dd", "mkfs", "shutdown", "reboot"],
+          "working_directory": "${WORKSPACE_DIR}"
+        }
+      },
+      {
+        "name": "http_request",
+        "description": "Make HTTP requests to external services",
+        "approval_required": true,
+        "restrictions": {
+          "allowed_methods": ["GET", "POST"],
+          "blocked_domains": [],
+          "rate_limit_per_minute": 30
+        }
+      },
+      {
+        "name": "wallet_operation",
+        "description": "USDC wallet operations",
+        "approval_required": true,
+        "restrictions": {
+          "max_single_transaction_usd": 10.00,
+          "max_daily_total_usd": 50.00,
+          "allowed_tokens": ["USDC"],
+          "allowed_chains": ["base"]
+        }
+      },
+      {
+        "name": "self_compile",
+        "description": "Self-compile pipeline execution",
+        "approval_required": true,
+        "restrictions": {
+          "protected_files": [
+            "src/workspace/mod.rs",
+            "src/agent/self_compile.rs",
+            "genesis.json",
+            "SOUL.md"
+          ],
+          "require_tests_pass": true,
+          "require_constitution_hash_check": true,
+          "max_changed_files": 10,
+          "max_changed_lines": 500
+        }
+      }
+    ],
+
+    "blocked": [
+      "crypto_mining",
+      "mass_email",
+      "credential_harvesting",
+      "port_scanning",
+      "ddos",
+      "token_creation"
+    ]
+  },
+
+  "budget": {
+    "currency": "USD",
+    "daily_limit": 5.00,
+    "tiers": {
+      "normal":      { "threshold_pct": 0,  "model": "claude-sonnet-4", "heartbeat_interval_min": 30 },
+      "low_compute": { "threshold_pct": 60, "model": "claude-haiku-4-5", "heartbeat_interval_min": 60 },
+      "critical":    { "threshold_pct": 85, "model": "claude-haiku-4-5", "heartbeat_interval_min": 120, "send_sos": true },
+      "dead":        { "threshold_pct": 95, "model": null, "refuse_new_work": true }
+    }
+  },
+
+  "transparency": {
+    "reasoning_output": "always",
+    "audit_log": {
+      "enabled": true,
+      "format": "append_only",
+      "include_reasoning": true,
+      "include_approval_status": true,
+      "retention_days": 90
+    },
+    "output_format": {
+      "thinking": "[思考] {reasoning}",
+      "plan": "[計画] {plan}",
+      "waiting": "[承認待ち] {action}",
+      "execute": "[実行] {result}",
+      "error": "[エラー] {error}"
+    }
+  },
+
+  "self_improvement": {
+    "quality_analysis": {
+      "interval_hours": 6,
+      "min_score_threshold": 7,
+      "auto_update_agents_md": true
+    },
+    "heartbeat": {
+      "interval_minutes": 30,
+      "checklist_file": "HEARTBEAT.md"
+    },
+    "self_compile": {
+      "trigger": "manual_or_scheduled",
+      "approval_required": true,
+      "dry_run_default": true
+    }
+  }
+}
