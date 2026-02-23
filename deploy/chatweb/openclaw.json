@@ -1,0 +1,48 @@
+{
+  "env": {
+    "OPENROUTER_API_KEY": "${OPENROUTER_API_KEY}"
+  },
+  "agents": {
+    "defaults": {
+      "model": {
+        "primary": "openrouter/minimax/minimax-m2.5"
+      },
+      "models": {
+        "openrouter/minimax/minimax-m2.5": {
+          "params": {
+            "temperature": 0.6
+          }
+        }
+      },
+      "workspace": "/root/.openclaw/workspace-dev",
+      "skipBootstrap": true,
+      "compaction": {
+        "mode": "safeguard"
+      }
+    },
+    "list": [
+      {
+        "id": "dev",
+        "default": true,
+        "workspace": "/root/.openclaw/workspace-dev",
+        "identity": {
+          "name": "Chatweb",
+          "theme": "AI chat assistant",
+          "emoji": "💬"
+        }
+      }
+    ]
+  },
+  "commands": {
+    "native": "auto",
+    "nativeSkills": "auto",
+    "restart": true
+  },
+  "gateway": {
+    "mode": "local",
+    "bind": "loopback",
+    "auth": {
+      "mode": "none"
+    }
+  }
+}

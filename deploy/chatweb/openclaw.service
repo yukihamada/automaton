@@ -1,0 +1,14 @@
+[Unit]
+Description=OpenClaw Gateway
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/openclaw gateway --port 18789 --dev
+Restart=always
+RestartSec=3
+Environment=HOME=/root
+WorkingDirectory=/root
+
+[Install]
+WantedBy=multi-user.target
