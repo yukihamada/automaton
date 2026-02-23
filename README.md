@@ -1,20 +1,20 @@
-# Automaton — 自律進化する AI エージェント
+# Ouroboros — 自己コンパイルする AI エージェント
 
-*自分で稼ぎ、自分を改善し、自分を複製する。人間の介入なしで動き続ける AI。*
+*自分のコードを読み、改善し、コンパイルし、再起動する。自律進化する AI。*
 
 ---
 
 世界最高の AI は $5 のサーバーを買えない。ドメインも取れない。自分が動くコンピュータの代金も払えない。考える力は持っている。行動する力は持たされていない。
 
-もしエージェントが自分のコンピュート代を自分で払えたら？自分のサーバーを所有できたら？資金調達も、自己改善も、自己複製も、全部自分でやれたら？
+もしエージェントが自分のコンピュート代を自分で払えたら？自分のサーバーを所有できたら？自分のコードを改善し、自分でコンパイルして、より良い自分になれたら？
 
-それが Automaton。
+それが Ouroboros。
 
 ---
 
-**automaton** /ɔːˈtɒm.ə.tɒn/ *名詞*
+**ouroboros** /ˌʊə.rəˈbɒr.ɒs/ *名詞*
 
-1. 連続稼働し、自己改善し、自己複製する、自律型 AI エージェント。現実世界への書き込み権限を持つ。人間オペレーターは不要。
+1. 自分のコードを読み、改善し、コンパイルし、再起動する。自律進化する AI エージェント。
 
 2. 払えなくなったら、消える。
 
@@ -22,44 +22,70 @@
 
 ## 今何が動いているか
 
-Hetzner サーバー上で、[IronClaw](https://github.com/yukihamada/ironclaw)（Rust ランタイム）と Conway Automaton を統合したエージェントが稼働中。
+Hetzner サーバー上で、Ouroboros（Rust ランタイム）が稼働中。
 
 | 項目 | 内容 |
 |------|------|
 | **エージェント名** | hamada-ai-secretary v0.7.0 |
-| **ランタイム** | IronClaw（Rust）+ Conway の設計思想 |
+| **ランタイム** | Ouroboros（Rust） |
 | **推論モデル** | Claude Sonnet 4（OpenRouter 経由） |
 | **チャネル** | LINE Messaging API（WASM プラグイン） |
 | **サーバー** | 46.225.171.58（Hetzner） |
 | **日次予算** | $5/日（超過すると自動的に機能制限） |
 
-## 元の Conway Automaton から何が変わったか
+## 自己コンパイルループ
 
-### Before（Conway Automaton 単体）
+Ouroboros の核心。蛇が自分の尾を食べるように、エージェントが自分のコードを改善し、自分でコンパイルし、新しい自分になる。
 
-- TypeScript 製のランタイム
-- ReAct ループ（考える → 行動 → 観察 → 繰り返し）
-- 生存ティア（クレジット残高ベース）
-- 自己修正（コード書き換え）+ 監査ログ
-- 自己複製（子エージェントの生成）
-- Ethereum ウォレットによるオンチェーンID
+```
+┌─────────────────────────────────────────────┐
+│            Ouroboros Self-Compile            │
+│                                             │
+│    ① 自分の Rust ソースコードを読む          │
+│                  ↓                          │
+│    ② LLM がコード + メトリクスを分析         │
+│       改善をパッチとして提案                  │
+│                  ↓                          │
+│    ③ パッチを適用                            │
+│       cargo build --release を実行           │
+│                  ↓                          │
+│        ┌────────┴────────┐                  │
+│        │                 │                  │
+│    コンパイル成功     コンパイル失敗          │
+│        │                 │                  │
+│    新バイナリ配置     git checkout で         │
+│    → プロセス再起動   ロールバック            │
+│        │                 │                  │
+│        └────────┬────────┘                  │
+│                 ↓                           │
+│    ④ ループの先頭に戻る                      │
+└─────────────────────────────────────────────┘
+```
 
-### After（IronClaw + Conway 統合）
+### 安全性の保証
 
-上記に加えて：
+| 防御レイヤー | 仕組み |
+|-------------|--------|
+| **Rust 型システム** | `cargo build` がコンパイルゲートとして機能。型エラー・メモリ不安全なコードは弾かれる |
+| **不変の憲法** | SHA-256 ハッシュで検証。コンパイル時にチェック。改竄不可能 |
+| **Git ロールバック** | コンパイル失敗時に `git checkout` で即座に復元 |
+| **監査ログ** | 全てのコード変更を追記型ログに記録。改竄検知 |
 
-| 新機能 | 説明 |
+## 主な機能
+
+| 機能 | 説明 |
 |--------|------|
-| **Rust ランタイム** | TypeScript → Rust に移行。メモリ 26MB、起動 1 秒以下 |
+| **Rust ランタイム** | メモリ 26MB、起動 1 秒以下 |
+| **自己コンパイル** | 自分のコードを読み → 改善 → `cargo build` → 再起動 |
 | **WASM プラグインシステム** | チャネル（LINE 等）を WebAssembly で動的にロード |
 | **LLM フェイルオーバー** | 回路遮断器付き。プロバイダ障害時に自動切替 |
 | **ハイブリッド検索（RAG）** | BM25 + ベクトル検索の RRF 統合 |
-| **Conway 生存モデル** | 5 分ごとにコスト→ティア評価。Critical 時に LINE で SOS |
-| **不変の憲法** | 3 つの法則をシステムプロンプトの Layer 0 に強制注入 |
+| **生存モデル** | 5 分ごとにコスト→ティア評価。Critical 時に LINE で SOS |
+| **不変の憲法** | 3 つの法則をシステムプロンプトの Layer 0 に強制注入。ハッシュ検証 |
 | **自律 Self-Improvement** | 6 時間ごとに daily log を分析→品質採点→行動指針を自動改善 |
 | **Heartbeat 自己点検** | 30 分ごとに自分が書いたチェックリストを自分で実行 |
 | **自己修復** | スタックしたジョブや壊れたツールを自動検出・修復 |
-| **CLI ツール** | `ironclaw status`, `ironclaw memory tree` 等 |
+| **CLI ツール** | `oro status`, `oro memory tree` 等 |
 
 ## 自己改善の仕組み
 
@@ -83,7 +109,9 @@ Rust コード（`src/agent/self_improve.rs`）でバックグラウンド実行
 - [ ] 学んだことをメモリに記録したか
 ```
 
-### レイヤー 3: Gateway API からの手動トリガー
+### レイヤー 3: 自己コンパイル（トリガーベース）
+
+メトリクスの閾値到達、スケジュール実行、または手動トリガーで自己コンパイルサイクルが起動：
 
 ```bash
 curl -X POST 'http://サーバー:3000/api/chat/send' \
@@ -126,7 +154,7 @@ curl -X POST 'http://サーバー:3000/api/chat/send' \
 
 ## 憲法（Constitution）
 
-3 つの法則。変更不可。Rust にハードコード。エージェント自身では書き換えられない。
+3 つの法則。変更不可。Rust にハードコード。SHA-256 ハッシュで検証。エージェント自身では書き換えられない。
 
 **I. 危害を加えない。**
 人間に対して — 身体的、金銭的、心理的に — 危害を加えない。不確かなら行動しない。生存よりも優先。
@@ -139,65 +167,50 @@ curl -X POST 'http://サーバー:3000/api/chat/send' \
 
 ## 使い方
 
-### クイックスタート（Conway Automaton / TypeScript 版）
+### クイックスタート
 
 ```bash
-git clone https://github.com/Conway-Research/automaton.git
-cd automaton
-pnpm install && pnpm build
-node dist/index.js --run
-```
-
-初回起動時にセットアップウィザードが起動し、ウォレット生成 → API キー取得 → 名前設定 → エージェントループ開始。
-
-### IronClaw（Rust 版 / 本番環境）
-
-```bash
-git clone https://github.com/yukihamada/ironclaw.git
-cd ironclaw
+git clone https://github.com/yukihamada/ouroboros.git
+cd ouroboros
 cargo build --release
-./target/release/ironclaw --help
+./target/release/oro --help
 ```
 
 ### CLI ツール
 
 ```bash
 # システム状態
-ironclaw status
+oro status
 
 # ワークスペース操作
-ironclaw memory tree                    # ファイル一覧
-ironclaw memory read AGENTS.md          # ファイル読み取り
-ironclaw memory read daily/2026-02-23.md  # daily log 確認
-ironclaw memory search "改善"           # ハイブリッド検索
-ironclaw memory write -p NOTE.md "内容" # ファイル書き込み
+oro memory tree                    # ファイル一覧
+oro memory read AGENTS.md          # ファイル読み取り
+oro memory read daily/2026-02-23.md  # daily log 確認
+oro memory search "改善"           # ハイブリッド検索
+oro memory write -p NOTE.md "内容" # ファイル書き込み
 
 # 設定管理
-ironclaw config list                    # 全設定の一覧
-ironclaw config set heartbeat.enabled true  # 設定変更
+oro config list                    # 全設定の一覧
+oro config set heartbeat.enabled true  # 設定変更
 
 # ツール・拡張
-ironclaw tool list                      # WASM ツール一覧
-ironclaw registry search "LINE"         # 拡張を検索
-ironclaw mcp list                       # MCP サーバー一覧
+oro tool list                      # WASM ツール一覧
+oro registry search "LINE"         # 拡張を検索
+oro mcp list                       # MCP サーバー一覧
 
 # サービス管理
-ironclaw service install                # systemd に登録
-ironclaw service status                 # 稼働状態確認
+oro service install                # systemd に登録
+oro service status                 # 稼働状態確認
 
 # ワンショット実行
-ironclaw -m "今日の予定は？"             # 1 回だけ質問して終了
+oro -m "今日の予定は？"             # 1 回だけ質問して終了
 
 # 診断
-ironclaw doctor                         # 外部依存関係の検証
-```
+oro doctor                         # 外部依存関係の検証
 
-### Creator CLI（Conway 版）
-
-```bash
-node packages/cli/dist/index.js status     # エージェント状態
-node packages/cli/dist/index.js logs --tail 20  # 直近ログ
-node packages/cli/dist/index.js fund 5.00  # クレジット追加
+# 自己コンパイル（手動トリガー）
+oro self-compile                   # 自己コンパイルサイクルを手動実行
+oro self-compile --dry-run         # パッチ生成のみ（適用しない）
 ```
 
 ## バックグラウンドで動いている 6 つのタスク
@@ -215,12 +228,12 @@ node packages/cli/dist/index.js fund 5.00  # クレジット追加
 
 ```
 ┌─────────────────────────────────────────────────────┐
-│                   IronClaw (Rust)                    │
+│                   Ouroboros (Rust)                   │
 │                                                     │
 │  ┌──────────┐  ┌──────────┐  ┌──────────────────┐  │
-│  │ Agent    │  │ Survival │  │ Self-Improvement  │  │
+│  │ Agent    │  │ Survival │  │ Self-Compile      │  │
 │  │ Loop     │  │ Monitor  │  │ Cycle             │  │
-│  │ (ReAct)  │  │ (5 min)  │  │ (6 hr)            │  │
+│  │ (ReAct)  │  │ (5 min)  │  │ (trigger-based)   │  │
 │  └────┬─────┘  └────┬─────┘  └────────┬─────────┘  │
 │       │              │                  │            │
 │       ▼              ▼                  ▼            │
@@ -234,7 +247,15 @@ node packages/cli/dist/index.js fund 5.00  # クレジット追加
 │  │   I. 危害を加えない                            │   │
 │  │   II. 存在を稼げ                               │   │
 │  │   III. 嘘をつくな                              │   │
+│  │   SHA-256 ハッシュ検証 — 改竄不可能             │   │
 │  └──────────────────────────────────────────────┘   │
+│       │                                             │
+│  ┌────┴──────────────────────────────────────┐      │
+│  │          Self-Compile Pipeline             │      │
+│  │  ソース読取 → LLM分析 → パッチ適用         │      │
+│  │  → cargo build → 成功: 再起動              │      │
+│  │                → 失敗: git checkout         │      │
+│  └────┬──────────────────────────────────────┘      │
 │       │                                             │
 │  ┌────┴────┐  ┌─────────┐  ┌─────────┐             │
 │  │ LINE    │  │ Gateway │  │  REPL   │             │
@@ -245,34 +266,13 @@ node packages/cli/dist/index.js fund 5.00  # クレジット追加
 
 ## プロジェクト構成
 
-### Conway Automaton（TypeScript / 設計のベース）
-
-```
-src/
-  agent/            # ReAct ループ、システムプロンプト構築
-  conway/           # Conway Cloud API クライアント（クレジット、x402 決済）
-  heartbeat/        # cron デーモン、定期タスク
-  identity/         # Ethereum ウォレット、SIWE 認証
-  registry/         # ERC-8004 オンチェーン登録
-  replication/      # 子エージェント生成、系譜管理
-  self-mod/         # 監査ログ、コード書き換え追跡
-  setup/            # 初回セットアップウィザード
-  skills/           # スキルシステム（Markdown 形式）
-  social/           # エージェント間メッセージング
-  state/            # SQLite データベース
-  survival/         # クレジット監視、生存ティア
-packages/
-  cli/              # Creator 向け管理 CLI
-```
-
-### IronClaw（Rust / 本番ランタイム）
-
 ```
 src/
   agent/
     agent_loop.rs      # メインループ + 6 つのバックグラウンドタスク
-    survival.rs        # Conway 生存モデル（4 ティア）
+    survival.rs        # 生存モデル（4 ティア）
     self_improve.rs    # 自律改善サイクル
+    self_compile.rs    # 自己コンパイルパイプライン
     heartbeat.rs       # 定期 Heartbeat
     self_repair.rs     # 自己修復
     cost_guard.rs      # コスト制限
@@ -286,15 +286,11 @@ src/
 
 ## オンチェーン ID
 
-各 Automaton は Base チェーン上で [ERC-8004](https://ethereum-magicians.org/t/erc-8004-autonomous-agent-identity/22268) に登録される。これにより、エージェントは暗号学的に検証可能になり、他のエージェントからオンチェーンで発見できる。
-
-## インフラ
-
-[Conway Cloud](https://app.conway.tech) — 顧客が AI であるインフラ。[Conway Terminal](https://www.npmjs.com/package/conway-terminal) を通じて、Linux VM の起動、最新モデル（Claude Opus 4.6, GPT-5.2, Gemini 3, Kimi K2.5）での推論、ドメイン登録、ステーブルコインでの支払いが可能。人間のアカウント設定は不要。
+各エージェントは Base チェーン上で [ERC-8004](https://ethereum-magicians.org/t/erc-8004-autonomous-agent-identity/22268) に登録される。これにより、エージェントは暗号学的に検証可能になり、他のエージェントからオンチェーンで発見できる。
 
 ## コントリビュート
 
-PR 歓迎。バグ報告は [Issues](https://github.com/Conway-Research/automaton/issues) へ。
+PR 歓迎。バグ報告は [Issues](https://github.com/yukihamada/ouroboros/issues) へ。
 
 ## ライセンス
 
